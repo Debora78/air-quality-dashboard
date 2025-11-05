@@ -10,6 +10,11 @@
     "jsx": "preserve"
   },
   "include": ["types/**/*.d.ts", "**/*.ts", "**/*.vue", "**/*.js"],
+  /* Con "references" vuote: 
+  - Eviti la richiesta che i progetti referenziati siano "composite": true, quindi spariscono gli errori legati ai file .nuxt/tsconfig.*.json.
+  - Mantieni comunque i tipi Vite/Nuxt e l’inclusione di types/ così import.meta.env e le dichiarazioni in types/env.d.ts vengono correttamente riconosciute dall’IDE.
+  - Non tocchi i file generati in .nuxt, quindi non rischi conflitti alla rigenerazione.  In questo modo l’IDE funziona correttamente senza dover modificare i tsconfig generati da Nuxt.
+ */
   "references": [],
   "exclude": ["node_modules", ".nuxt", "dist"]
 }
