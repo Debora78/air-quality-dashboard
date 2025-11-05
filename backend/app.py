@@ -80,7 +80,7 @@ def get_stations():
     except requests.exceptions.RequestException as e:
         # errore di rete o upstream non raggiungibile
         return jsonify({"message": "Errore contattando il servizio upstream", "detail": str(e)}), 502
-
+    #get_station_detail: fa da proxy, individua le "metriche" nella risposta upstream e aggiunge il campo root weighted_average_7d che mappa ogni metrica al valore calcolato.
 @app.route("/api/stations/<station_id>", methods=["GET"])
 def get_station_detail(station_id):
     """
@@ -120,7 +120,9 @@ def get_station_detail(station_id):
         weighted_map = {}
         for metric_name, days in metrics_container.items():
             # assumiamo che 'days' siano ordinati dal più recente al più vecchio; se non lo sono, bisognerebbe ordinarli per data
+            
             weighted = compute_weighted_average(days)
+            # compute_weighted_average: prende i giorni forniti (assume più recente primo), ignora giorni con sample_size==0, conta fino a 7 giorni validi e calcola Σ(average*sample_size) / Σ(sample_size). Se Σ=0 restituisce None (null in JSON).
             weighted_map[metric_name] = weighted
 
         # Aggiungiamo un campo esplicito nella risposta upstream
@@ -128,6 +130,7 @@ def get_station_detail(station_id):
         data["weighted_average_7d"] = weighted_map
 
         return jsonify(data), resp.status_code
+        #- gestione errori: si intercettano eccezioni di rete e http error, e si ritornano JSON con message e detail per il frontend.
 
     except requests.exceptions.HTTPError as e:
         # l'upstream ha restituito 4xx/5xx

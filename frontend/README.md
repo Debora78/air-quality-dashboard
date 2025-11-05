@@ -1,3 +1,18 @@
+## STRUTTURA DEL PROGETTO
+air-quality-dashboard/
+├─ backend/
+│  ├─ app.py
+│  ├─ requirements.txt
+│  └─ .env.example
+├─ frontend/
+│  ├─ nuxt.config.ts
+│  ├─ package.json
+│  └─ (cartella Nuxt standard: pages, components, composables, assets, etc.)
+├─ README.md
+└─ .gitignore
+
+
+
 # Nuxt Minimal Starter
 
 Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
