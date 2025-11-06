@@ -1,0 +1,247 @@
+/* layout generale */
+.page-container {
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 16px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial;
+  color: #222;
+  line-height: 1.4;
+}
+
+/* header */
+.page-container h1 {
+  font-size: 1.6rem;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* card/tabella wrapper */
+.table-card {
+  background: #ffffff;
+  border: 1px solid #e6e9ef;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+  overflow: auto; /* permette lo scroll orizzontale */
+}
+
+/* tabella */
+table.stations {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 680px; /* evita collasso su desktop */
+  font-size: 0.95rem;
+}
+
+/* head */
+table.stations thead th {
+  text-align: left;
+  padding: 12px 10px;
+  font-weight: 600;
+  color: #0b1220;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #edf0f6;
+  background: #fbfdff;
+}
+
+/* righe e celle */
+table.stations tbody td {
+  padding: 10px;
+  border-bottom: 1px solid #f2f4f8;
+  vertical-align: middle;
+  color: #253046;
+}
+
+/* zebra */
+table.stations tbody tr:nth-child(even) {
+  background: #fbfcfd;
+}
+
+/* id monospace e nome più prominente */
+.cell-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono",
+    monospace;
+  color: #6b7280;
+  font-size: 0.85rem;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* indirizzo e città stile */
+.cell-address {
+  color: #374151;
+}
+.cell-city {
+  color: #475569;
+  font-weight: 500;
+}
+
+/* bottone/azione */
+.action-link {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #0ea5a2;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.15s ease, transform 0.06s ease;
+}
+.action-link:hover {
+  background: #089a98;
+  transform: translateY(-1px);
+}
+.action-link:focus-visible {
+  outline: 3px solid rgba(14, 165, 162, 0.18);
+  outline-offset: 2px;
+}
+
+/* responsive: riduci info e abilita scroll */
+@media (max-width: 720px) {
+  table.stations {
+    min-width: 560px;
+    font-size: 0.9rem;
+  }
+  /* nascondi la colonna ID per fare spazio */
+  table.stations thead th:nth-child(1),
+  table.stations tbody td:nth-child(1) {
+    display: none;
+  }
+  /* mostra città sotto indirizzo per migliore leggibilità */
+  .cell-address {
+    display: block;
+    margin-bottom: 6px;
+  }
+  .cell-city {
+    display: block;
+    margin-top: -6px;
+    color: #334155;
+  }
+  .page-container h1 {
+    font-size: 1.3rem;
+  }
+}
+
+/* stato loading / error */
+.loading,
+.error {
+  padding: 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.loading {
+  background: #f8fafc;
+  color: #334155;
+  border: 1px dashed #e6eef6;
+}
+.error {
+  background: #fff5f5;
+  color: #9f3a38;
+  border: 1px solid #ffdede;
+}
+
+/* piccoli miglioramenti estetici */
+.table-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+/*  ___________________________________________________________ */
+/* Stili minimali coerenti con station.css suggerito in precedenza [id].vue*/
+
+/* container generale */
+.station-detail-details {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+  font-family: system-ui, Arial, sans-serif;
+}
+.error-details {
+  color: #a00;
+  background: #fee;
+  padding: 8px;
+  border-radius: 4px;
+}
+.weighted-summary-details {
+  margin: 12px 0;
+  padding: 8px;
+  background: #f4f8ff;
+  border-left: 4px solid #3b82f6;
+}
+.weighted-row-details {
+  margin: 4px 0;
+}
+.metric-select-details {
+  margin: 12px 0;
+}
+.days-table-details {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+.days-table-details th,
+.days-table-details td {
+  border: 1px solid #ddd;
+  padding: 6px 8px;
+  text-align: left;
+}
+.days-table-details th {
+  background: #f7f7fb;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0f172a;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f8fb 100%);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(12, 21, 40, 0.06);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+.btn-back:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(12, 21, 40, 0.08);
+}
+.btn-back__icon {
+  width: 18px;
+  height: 18px;
+  color: #2563eb;
+  flex: 0 0 auto;
+  display: inline-block;
+}
+.btn-back__text {
+  line-height: 1;
+  display: inline-block;
+  white-space: nowrap;
+}
+.btn-back:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+/*  responsive 
+@media (max-width: 700px) {
+  .station-meta-detail {
+    grid-template-columns: 110px 1fr;
+  }
+  .station-title-detail {
+    font-size: 1.2rem;
+  }
+  .debug-pre-detail {
+    max-height: 220px;
+    font-size: 0.85rem;
+  }
+}
+ */
