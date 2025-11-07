@@ -1,4 +1,10 @@
 /* layout generale */
+
+header,
+footer {
+  padding: 0.5rem;
+  background: #f6f6f6;
+}
 .page-container {
   max-width: 1100px;
   margin: 24px auto;
