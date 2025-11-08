@@ -6,7 +6,7 @@
   -->
   <header>
     <!-- Header globale: metti qui markup/brand statico (non logica di pagina) -->
-    <h1>La mia app</h1>
+    <h1>Air Quality Dashboard</h1>
   </header>
 
   <!--
