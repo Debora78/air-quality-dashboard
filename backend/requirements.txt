@@ -1,4 +1,10 @@
-Flask==2.2.5
+#Questo file elenca tutte le librerie Python di cui il progetto ha bisogno e serve per installare facilmente le dipendenze con un solo comando: pip install -r requirements.txt
+#todo È utile per:
+#todo • 	Condividere il progetto con altri
+#todo • 	Deploy su server o ambienti cloud
+#todo • 	Tenere traccia delle versioni compatibili
+# Questo è il file che dichiara le dipendenze del progetto Python le cui librerie inserite servono a costruire, configurare e far comunicare il backend Flash con il mondo esterno
+Flask==2.2.5 
 python-dotenv==1.0.0
 requests==2.31.0
 Flask-Cors==3.0.10

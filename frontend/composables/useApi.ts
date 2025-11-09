@@ -1,10 +1,19 @@
-// Import di axios per effettuare le chiamate HTTP verso il backend.
+/* Questo file è stato creato per centralizzare la configurazione delle chiamate API per mantenere codice pulito e riutilizzabile  */
+
+//Import di axios per effettuare le chiamate HTTP verso il backend.
 import axios from "axios";
 
-// Flag di debug globale: true se VITE_DEBUG_API è impostato nell'env.
+// Crea una variabile booleana DEBUG che sarà true solo se hai definito VITE_DEBUG_API=true nel tuo .env. Ti permette di attivare o disattivare il debug in modo controllato, senza modificare il codice..
+
+//? import.meta.env permette di accedere alle variabili d'ambiente in Vite/Nuxt e contiene tutte le variabili definite nei file .env
+
 const DEBUG = !!import.meta.env?.VITE_DEBUG_API;
 
-// base URL del backend (prende NUXT_PUBLIC_API_BASE o VITE_API_BASE, altrimenti fallback)
+//todo VITE_DEBUG_API è una variabile che può essere definita nel file .env e serve per attivare o disattivare il debug delle chiamate API
+//* ? è l'optional chaining controlla se import.meta.env esiste prima di legere VITE_DEBUG_API ed evita errori se l'ambiente non è definito
+// !! Serve per convertire il valore in booleano: Se VITE_DEBUG_API è "true" -> DEBUG sarà true - Se non esiste o è "false" -> DEBUG sarà false
+
+// base URL del backend (prende NUXT_PUBLIC_API_BASE (dichiarata nel .env frontend usando Nuxt) o VITE_API_BASE(se si usa vite senza Nuxt), altrimenti fallback(se le due precedenti non sono definite))
 const base =
   (import.meta.env?.NUXT_PUBLIC_API_BASE as string) ||
   (import.meta.env?.VITE_API_BASE as string) ||
@@ -12,40 +21,52 @@ const base =
 
 // Creiamo un'istanza axios con baseURL e timeout; usare `http.get('/path')` nelle chiamate.
 const http = axios.create({
-  baseURL: base, // baseURL per tutte le richieste
-  timeout: 5000, // timeout di 5 secondi per evitare attese indefinite
+  //Crea una nuova istanza di Axios
+  baseURL: base, // baseURL per tutte le richieste(usa la costante base dichiarata sopra(const base =))
+  timeout: 5000, // timeout di 5 secondi per evitare attese indefinite(se il server non risponde entro 5 secondi Axios interrompe la richiesta )
 });
 
 // Export del composable useApi
 export const useApi = () => {
-  // Log iniziale che mostra il base quando DEBUG è attivo
+  //todo esporta la funzione composable chiamata useApi() - Serve per raggruppare tutte le funzioni che fanno chiamate Api(ogni componente può importarla e usare la funzione API in modo pulito)
+  // Se la variabile DEBUG è attiva (cioè VITE_DEBUG_API=true nel .env ), allora stampa nel terminale:[useApi] base API: http://localhost:5000/api(ciò aiuta a verificare che l'URL del backend sia corretto durante lo sviluppo)
   if (DEBUG) console.debug("[useApi] base API:", base);
 
-  // ---------- getStations ----------
+  //? ---------- getStations ----------
   // Funzione per ottenere la lista di tutte le stations e normalizzare la risposta.
+  //todo const getStation = async(): dichiaro una funzione asincrona
+  //* : Promise<{stations: any[]}> : Con TypeScrip dichiaro il tipo di dato che la funzione restituirà cioè getStation() restituirà una Promise che contiene un oggetto con una proprietà stations, che è un array
+  //Promise in JS e TS è un tipo di dato speciale che rappresenta il risultato futuro di un'operazione asincrona e può avere 3 stadi: 1) pending - in attesa: l'operazione non è ancora finita - 2) fulfilled - completata con successo: restituisce il risultato - 3) rejected - fallita: c'è stato un errore
   const getStations = async (): Promise<{ stations: any[] }> => {
-    // Log diagnostico dell'endpoint chiamato
+    // Questo è un log di debug che viene eseguito solo se DEBUG è true - Serve per monitorare le chiamate API durante lo sviluppo
     if (DEBUG) console.debug("[useApi] getStations -> GET", "/stations");
 
     try {
-      // Eseguiamo la richiesta GET verso /stations usando l'istanza http
-      const res = await http.get("/stations");
-      // Estrarre il payload dalla risposta axios
+      // Eseguiamo la richiesta GET all'endpoint  /stations usando l'istanza Axios http
+      const res = await http.get("/stations"); //* await: aspetta che arrivi la risposta prima di proseguire
+      //*res è l'oggetto risposta completo di Axios
+
+      // Estrae solo il contenuto della risposta (cioè il JSON restituito dal backend)
+      // res.data è quello che il backend ha inviato con return jsonify() in Flask
       const payload = res.data;
 
-      // Se il backend ritorna direttamente un array -> normalizziamo in { stations: [...] }
+      // Controlla se payload è direttamente un array
+      // return {station: payload} incapsula l'oggetto {station[..]} per uniformare il formato così il frontend riceve sempre un oggetto con la proprietà stations
       if (Array.isArray(payload)) return { stations: payload };
 
-      // Se il backend ritorna { stations: [...] } -> estraiamo stations
+      //* payload && - Verifica che payload esista e non sia null o undefined e se payload è falsy(cioè null, undefined, false, 0, ecc), il blocco if si ferma subito
+      //* typeof payload === "object" && - Verifica che payload sia un oggetto escludendo tipi coem string, number, boolean e serve per assicurarsi che payload abbia proprietà come stations
+      //* Array.isArray((payload as any).stations) - Controlla se la proprietà stations dentro payload è un array e usando payload as any si evitano errori di tipo in TypeScript
+
       if (
         payload &&
         typeof payload === "object" &&
         Array.isArray((payload as any).stations)
       ) {
-        return { stations: (payload as any).stations };
+        return { stations: (payload as any).stations }; //stations: è l'array - payload as any è la risposta di qualsiasi tipo - .stations è la proprietà dell'oggetto JSON che contiene l'array di stazioni(all'interno ogni stazione avrà id, nome ecc...)
       }
 
-      // Se il backend ritorna { data: [...] } -> estraiamo data come stations
+      // .data contiene i dati recuperati dalla richiesta ricevuta da Flask i quali poi vengono convertiti in JSON con jsonify(data) per poterli inviare al frontend
       if (
         payload &&
         typeof payload === "object" &&
@@ -54,24 +75,30 @@ export const useApi = () => {
         return { stations: (payload as any).data };
       }
 
-      // Fallback: nessuna station trovata -> ritorniamo array vuoto in shape coerente
+      // Fallback: Se nessuna condizione precedente è soddisfatta (nessun array valido trovato), restituisci comunque: {stations: []}
       return { stations: [] };
     } catch (err: any) {
       // In caso di errore network/logico logghiamo in DEBUG lo stato o il messaggio
+      //*se err esiste, prova a leggere err.response
+      //*se response esiste, prova a leggere response.status
+      //*se qualcuno di questi è undefined, non dà errore: restituisce undefined(Evita errori tipo: Cannot read property 'status' of undefined)
       if (DEBUG)
         console.debug(
           "[useApi] getStations failed:",
           err?.response?.status ?? err?.code ?? err?.message
-        );
+        ); //*??(Nullish coalescing):se il valore di sinistra è null o undefined, usa quello a destra
       // Ritorniamo comunque la stessa shape per semplicità del caller
       return { stations: [] };
     }
   };
 
-  // ---------- getStationMeasurements ----------
+  //todo ---------- getStationMeasurements ----------
   // Funzione che prova più endpoint per ottenere le misurazioni di una station, poi fallback su getStations.
+  //*Funzione asincrona(async)-> usa await per chiamare HTTP
+  //*Accetta un parametro id(stringa)->identificativo della stazione
+  //*Restituisce una Promise che risolve in un array gerarchico(any[]) - Potrebbe essere un array di misurazioni, giorni, serie temporali, ecc..
   const getStationMeasurements = async (id: string): Promise<any[]> => {
-    // Se id non fornito, ritorniamo subito array vuoto per evitare chiamate inutili
+    //* Se id è vuoto, nullo o undefined -> ritorniamo subito array vuoto per evitare chiamate inutili o errate
     if (!id) return [];
 
     // Lista di endpoint relativi da provare in ordine di preferenza
@@ -80,7 +107,7 @@ export const useApi = () => {
       `/api/stations/${id}`, // preferito: il proxy restituisce il JSON arricchito
       `/api/stations/${id}/measurements`,
       `/api/stations/${id}/days`,
-      // poi prova gli endpoint relativi all'upstream (se necessario)
+      // poi prova gli endpoint relativi all'upstream ad es. uun server esterno(se necessario)
       `/stations/${id}/measurements`,
       `/stations/${id}/days`,
       `/stations/${id}/timeseries`,
@@ -91,28 +118,39 @@ export const useApi = () => {
       `/measurements?station=${id}`,
     ];
 
-    // Helper che normalizza varie forme di payload e restituisce il primo array utile trovato
+    // Questa funzione extractArray è un Helper Intelligente che serve a interpretare le risposte JSON ricevute dagli endpoint dichiarati sopra
+    //*Funzione che accetta un payload(cioè la risposta JSON ricevuta) che restituisce: - un array (any[]) se trova dati utili - null se non trova nulla
     const extractArray = (payload: any): any[] | null => {
-      // Se payload è falsy, non c'è nulla da fare
+      //todo Se payload è falsy(null, undefined,false, ecc..) -> ritorna null
       if (!payload) return null;
-      // Se payload è già un array lo usiamo direttamente
+
+      //todo Se payload è già un array -> lo restituisce direttamente
       if (Array.isArray(payload)) return payload;
-      // Se payload contiene data che è un array -> usalo
+
+      //todo Se payload contiene data che è un array -> lo restituisce
       if (Array.isArray(payload?.data)) return payload.data;
-      // Se payload contiene measurements che è un array -> usalo
+
+      //todo Se payload contiene measurements che è un array -> lo restituisce
       if (Array.isArray(payload?.measurements)) return payload.measurements;
-      // Se payload contiene result che è un array -> usalo
+
+      //todo Se payload contiene result che è un array -> lo restituisce
       if (Array.isArray(payload?.result)) return payload.result;
 
-      // Ricerca ricorsiva del primo array di oggetti nella struttura
+      // Questa costante findArray è una funzione ricorsiva che serve per scandagliare un oggetto JSON complesso e trovare il primo array di oggetti al suo interno.
+      //*Accetta un parametro obj di tipo any(può essere qualsiasi cosa) ->Restituisce - un array(any[])se lo trova - null se non trova nulla
       const findArray = (obj: any): any[] | null => {
-        // Se non è oggetto o è null, torniamo null
+        //todo Se obj è null, undefined, false, ecc OPPURE non è un oggetto(es. stringa, numero)->Ritorna null subito
         if (!obj || typeof obj !== "object") return null;
-        // Se è array e il primo elemento è oggetto, consideriamolo valido
+
+        //todo Se obj è array e ha almeno un elemento obj.length, il primo elemento è un oggetto(typeof objj[0]==="object")-> lo considera valido
         if (Array.isArray(obj) && obj.length && typeof obj[0] === "object")
-          return obj;
-        // Altrimenti esploriamo ricorsivamente le proprietà
+          return obj; //todo restituisce obj
+
+        //*Altrimenti scorre tutte le proprietà dell'oggetto
+        //*Per ciascuna proprietà chiama ricorsivamente findArray
+        //*Se trova un array valido in una proprietà annidata -> lo restituisce
         for (const k of Object.keys(obj)) {
+          //Il try catch serve per evitare il crash se una proprietà è malformata
           try {
             const f = findArray(obj[k]);
             if (f) return f;
@@ -120,36 +158,42 @@ export const useApi = () => {
             // Ignoriamo errori interni alla ricerca
           }
         }
-        // Nessun array trovato in questo ramo
+        // Se nessuna proprietà contiene un array valido -> ritorna null
         return null;
       };
 
-      // Avviamo la ricerca ricorsiva e ritorniamo il risultato
+      // Avviamo la ricerca ricorsiva e se payload è già un array -> lo restituisce
       return findArray(payload);
     };
 
-    // Proviamo ogni endpoint fino a trovare dati utili
+    // Scorre tutti gli endpoints definiti prima (/api/sations/${id}, ecc) - ogni ep è una stringa con il path relativo
     for (const ep of endpoints) {
       try {
-        // Log diagnostico che indica quale endpoint stiamo provando
+        // Prova a eseguire la richiesta HTTP e se fallisce (es. 404, timeout) passa al catch
+        //*Se DEBUG è attivo, stampa quale endpoint sta provando - base è la base URL(es. http://localhost:3000), ep è il path
         if (DEBUG) console.debug("[useApi] trying", `${base}${ep}`);
-        // Eseguiamo la richiesta con l'istanza http (baseURL già applicata)
+
+        //todo Eseguiamo la richiesta HTTP usando Axios - res.data sarà il contenuto JSON ricevuto
         const res = await http.get(ep);
-        // Proviamo ad estrarre un array utile dalla risposta
+
+        //todo Usa la funzione extractArray per cercare un array utile nella risposta(può essere in .data, .measurements, .result, ecc..)
         const arr = extractArray(res.data);
-        // Se troviamo un array non vuoto lo restituiamo subito
+
+        //todo Se arr è un array e non è vuoto
         if (Array.isArray(arr) && arr.length) {
           if (DEBUG)
+            //todo Logga il successo
             console.debug(
               "[useApi] getStationMeasurements success on",
               ep,
               "len",
               arr.length
             );
-          return arr;
+          return arr; //todo ritorna l'array -> fine funzione
         }
-        // Se la risposta è OK ma non contiene un array utile logghiamo in DEBUG
+        //*Se la chiamata è andata a buon fine (200 OK) ma non c'è un array utile:
         if (DEBUG)
+          //todo Logga che l'endpoint ha risposto ma non ha fornito dati utili
           console.debug(
             "[useApi] ok but no array on",
             ep,
@@ -157,8 +201,9 @@ export const useApi = () => {
             res.status
           );
       } catch (err: any) {
-        // In caso di errore logghiamo (timeout, 404, ecc.) e passiamo al successivo endpoint
+        //*Se la chiamata fallisce(es. 404, timeout, errore di rete)
         if (DEBUG)
+          //todo Logga l'errore e passa al prossimo endpoint
           console.debug(
             "[useApi] endpoint failed",
             ep,
@@ -167,125 +212,188 @@ export const useApi = () => {
       }
     }
 
-    // Se nessun endpoint ha restituito dati utili, eseguiamo il fallback: scarichiamo tutte le stations
+    //*Questo è il fallback finale della funzione getStationMeasurements.
+    //* Serve per gestire il caso in cui nessuno degli endpoint provati prima ha restituito dati utili.
+    //todo Se tutti gli endpoint hanno fallito si attiva il try
     try {
       if (DEBUG)
-        console.debug("[useApi] fallback -> getStations and filter by id:", id);
-      // getStations è definita sopra e ritorna { stations: [...] }
-      const allWrapper = await getStations();
-      // Normalizziamo le possibili forme di allWrapper in un array list
-      const list: any[] = Array.isArray(allWrapper)
-        ? allWrapper
-        : Array.isArray((allWrapper as any)?.stations)
-        ? (allWrapper as any).stations
-        : Array.isArray((allWrapper as any)?.data)
-        ? (allWrapper as any).data
-        : [];
+        //*Se DEBUG è attivo,
 
-      // Cerchiamo la station con l'id richiesto
+        //*stampa che si sta eseguendo il fallback con getStations()
+        console.debug("[useApi] fallback -> getStations and filter by id:", id);
+
+      //todo Chiama la funzione getStations() che restituisce tutte le stazioni e il risultato è salvato in allWrapper(può avere varie forme(oggetto con .stations, .data, o anche un array diretto))
+      const allWrapper = await getStations();
+
+      //todo Si cerca di estrarre un array di stazioni da allWrapper, qualunque sia la sua forma
+      //*Se Array.isArray(allWrapper) è vero
+      const list: any[] = Array.isArray(allWrapper)
+        ? allWrapper //*restituisce allWrapper
+        : //todo Accedi a .station solo se allWrapper esiste
+        Array.isArray((allWrapper as any)?.stations)
+        ? //*Se station è un array, restituiscilo
+          (allWrapper as any).stations
+        : //todo Usa Array.isArray(..)per verificare che data sia effettivamente un array
+        Array.isArray((allWrapper as any)?.data)
+        ? (allWrapper as any).data //*Se è un array restituiscilo
+        : //todo Altrimenti restituisci array vuoto se non ci sono dati utili
+          [];
+
+      // Scorre l’array list (che contiene le stazioni ricevute dall'API tramite getStations()), per ogni elemento s, controlla se s?id (id di ogni singola stazione dentro list) è uguale a id(id  passato alla funzione getStationMeasurements(id)->cioè quello selezionato dall'utente)
       const found = list.find((s: any) => s?.id === id) ?? null;
-      // Se non troviamo la station, non ci sono misurazioni disponibili
-      if (!found) return [];
-      // Proviamo a restituire proprietà comunemente usate per misurazioni
+
+      //todo Se found è null(cioè la stazione con quell'id non è stata trovata),
+      if (!found) return []; //*la funzione ritorna un array vuoto
+
+      //todo controlla le proprietà più comuni che potrebbero contenere misurazioni:
+      //*days -> Misurazioni aggregate per giorno
       if (Array.isArray(found.days)) return found.days;
+
+      //*measurements -> Misurazioni dettagliate
       if (Array.isArray(found.measurements)) return found.measurements;
+
+      //*data -> Generico contenitore di dati
       if (Array.isArray(found.data)) return found.data;
+
+      //*timeseries -> Serie temporali
       if (Array.isArray(found.timeseries)) return found.timeseries;
-      // Nessuna proprietà contenente array trovata: ritorniamo array vuoto
-      return [];
+
+      //* Nessuna proprietà utile
+      return []; //*array vuoto
     } catch (e: any) {
-      // In caso di errore durante il fallback logghiamo e ritorniamo array vuoto
+      // In caso di errore durante il fallback catturo l'errore
       if (DEBUG)
+        //*Se DEBUG è attivo -> Logga l'errore
         console.debug("[useApi] fallback getStations failed:", e?.message ?? e);
-      return [];
+      return []; //*Ritorna comunque un array vuoto
     }
   };
 
-  // ---------- getStation ----------
-  // Funzione che prova /stations/:id e poi fallback su getStations.
+  //todo ---------- getStation(id) ----------
+  // Funzione asincrona chiamata getStation, riceve un parametro id(stringa), Restituisce una Promise che può contenere un oggetto qualsiasi(any) oppure null
   const getStation = async (id: string): Promise<any | null> => {
-    // Se id non fornito ritorniamo null
-    if (!id) return null;
+    if (!id) return null; //*Se id non è stato fornito (è undefined, null o stringa vuota)  -> ritorn null evitando chiamate inutili
 
     // Proviamo prima l'endpoint specifico
     try {
-      // Log dell'URL provato
-      if (DEBUG) console.debug("[useApi] try GET", `/stations/${id}`);
-      // Richiesta GET con l'istanza http
-      const res = await http.get(`/stations/${id}`);
-      // Estraiamo il payload
+      //todo Se DEBUG è attivo
+      if (DEBUG) console.debug("[useApi] try GET", `/stations/${id}`); //*Stampa l'URL della richiesta
+
+      //todo Fa una richiesta HTTP GET all'endpoint /stations/{id}
+      const res = await http.get(`/stations/${id}`); //*Salva la risposta nella costante res
+
+      //todo Estrae il corpo della risposta(data) che può essere un oggetto, un array o un wrapper
       const data = res.data;
 
-      // Log della risposta grezza per debug
+      //*Se DEBUG è attivo -> stampa la risposta ricevuta
       if (DEBUG) console.debug("[useApi] getStation raw response:", data);
 
-      // 1) Se il payload è direttamente l'oggetto station e l'id coincide -> restituiscilo
-      if (data && typeof data === "object" && data.id === id) return data;
+      //todo CASO 1 - OGGETTO DIRETTO
+      //*Se data è un oggetto e ha un id uguale a quello cercato
+      if (data && typeof data === "object" && data.id === id) return data; //* Restituisci l'oggetto
 
-      // 2) Se il payload è wrapper comune { station: {...} } o { data: {...} } -> controlla e restituisci
+      //todo CASO 2 - WRAPPER { station: {...} } o { data: {...} }
+      //* Se data esiste e il tipo di data è un oggetto
       if (data && typeof data === "object") {
-        if (data.station && data.station.id === id) return data.station;
+        //*Se l'oggetto data contiene una proprietà chiamata station - confronta l'id della stazione ricevuta(data.station.id) con l'id che si sta cercando (id -> quello selezionato dall'utente)
+        if (data.station && data.station.id === id) return data.station; //*restituisce direttamente l'oggetto station
+
+        //*Se l'oggetto data contiene una proprietà chiamata data e l'id dentro data.data è uguale all'id che si sta cercando -> Restituisce data.data(tutto l'oggetto data)
         if (data.data && data.data.id === id) return data.data;
       }
 
-      // 3) Se il payload è un array -> cerchiamo l'elemento con matching id
+      //todo CASO 3 - DATA è UN ARRAY
       if (Array.isArray(data)) {
+        //*Se data è un array
+
+        //*sa .find() per cercare il primo elemento s nell'array dove s?.id(id stazione corrente) === id(id selezionato dall'utente)
+        //*Se lo trova lo assegna alla costante found
+        //*Se non lo trova found = null(grazie a ??null)
         const found = data.find((s: any) => s?.id === id) ?? null;
-        if (found) return found;
+
+        if (found) return found; //*Se found non è null -> Restituisce la stazione trovata
       }
 
-      // 4) Se payload contiene { stations: [...] } -> cerchiamo dentro quell'array
+      //todo DATA.STATION è un array { stations: [...] }
+      //*Se data esiste (non è null o undefined), data.stations è un array
       if (data && Array.isArray((data as any).stations)) {
+        //*Usa .find() per cercare la prima stazione s dentro data.stations dove s.id === id
+        //*Se la trova la assegna alla costante found
         const found =
-          (data as any).stations.find((s: any) => s?.id === id) ?? null;
+          (data as any).stations.find((s: any) => s?.id === id) ?? null; //*Se non la trova ->found = null(grazie a ??null)
+
+        //*found non è null -> Restituisce la stazione giusta
         if (found) return found;
       }
 
-      // Se non troviamo nulla nella risposta diretta procediamo al fallback
+      //* Se la chiamata diretta a /statons/:id fallisce(es. errore di rete, 404)
     } catch (err: any) {
-      // In caso di errore sulla chiamata diretta logghiamo lo stato/messaggio in DEBUG
       if (DEBUG)
+        //*Se DEBUG è attivo
+
+        //*Logga l'errore e non interrompe la funzione
         console.debug(
           "[useApi] getStation direct request failed:",
           err?.response?.status ?? err?.code ?? err?.message
         );
-      // Non rilanciamo: vogliamo provare il fallback
+      //* -> prosegue con il fallback
     }
 
-    // Fallback: scarichiamo la lista completa e filtriamo lato client
+    // Fallback: scarica la lista completa delle stazioni e cerca quella giusta
     try {
+      //*gestione di eventuali errori
+
       if (DEBUG)
+        //*Se DEBUG è attivo
+
+        //*Stampa un messaggio che indica che si sta eseguendo il fallback
         console.debug("[useApi] fallback -> getStations and filter by id:", id);
+
+      //todo chiam la funzione getStations() per ottenere tutte le stazioni disponibili(await attende la risposta)
       const all = await getStations();
 
-      // Normalizziamo all in un array list
+      //*Verifica in che formato è la risposta all
+      //*Estrae l'array di stazioni in list da una delle seguenti forme:
       const list: Array<any> = Array.isArray(all)
-        ? all
+        ? all //*è un array-> lo usa
         : Array.isArray((all as any)?.stations)
-        ? (all as any).stations
+        ? (all as any).stations //*all.station è un array-> lo usa
         : Array.isArray((all as any)?.data)
-        ? (all as any).data
-        : [];
+        ? (all as any).data //*all.data è un array-> lo usa
+        : []; //*nessuna delle precedenti-> usa array vuoto
 
-      // Log della lunghezza della lista ottenuta
+      //todo Log della lunghezza della lista ottenuta
+      //*Se DEBUG è attivo -> stampa quanti elementi contiene list
       if (DEBUG) console.debug("[useApi] list length:", list.length);
 
-      // Cerchiamo la station con l'id richiesto
+      //todo Ricerca la station con l'id richiesto
+      //*Cerca la prima stazione in list dove s.id === id
+      //*Se la trova -> assegna alla costante found
+      //*Se non la trova -> found = null
       const found = list.find((s: any) => s?.id === id) ?? null;
 
-      // Log del risultato della ricerca
+      //todo  Log del risultato della ricerca
+      //*Se DEBUG è attivo -> stampa la stazione trovata(o null)
       if (DEBUG) console.debug("[useApi] getStation found:", found);
 
-      // Ritorniamo l'elemento trovato (o null se non esiste)
-      return found;
+      //todo Ritorniamo l'elemento trovato (o null se non esiste)
+      return found; //*Restituisce la stazione trovata oppure null se non la trova
     } catch (e: any) {
-      // In caso di errore nel fallback logghiamo e ritorniamo null
+      // * Se la chiamata a getStation() fallisce
       if (DEBUG)
+        //*Se DEBUG è attivo
+
+        //*Logga l'errore
         console.debug("[useApi] fallback getStations failed:", e?.message ?? e);
-      return null;
+
+      return null; //*Restituisce null
     }
   };
 
-  // Esportiamo le funzioni pubbliche del composable
+  //todo Esportiamo le funzioni pubbliche del composable
+  //*getStations() -> tutte le stazioni
+  //*getStation() -> una stazione specifica
+  //*getStationMeasurements(id) -> misurazioni associate
+
   return { getStations, getStation, getStationMeasurements };
 };

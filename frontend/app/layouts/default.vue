@@ -3,7 +3,7 @@
     <h1>Air Quality Dashboard</h1>
   </header>
 
-  <!-- Punto di render delle pagine; :key forza remount quando cambia la route -->
+  <!-- Inserisce la pagina attiva(es. index.vue)nel layout - è gestito automaticamente da Nuxt -->
   <NuxtPage :key="$route.fullPath" />
 
   <footer>

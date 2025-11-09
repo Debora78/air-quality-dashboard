@@ -229,13 +229,13 @@ def get_stations():
 #?FLUSSO FRONTEND-BACKEND:
 #*È la rotta @app.route("/stations/<station_id>, methods=["GET"]) che Flask intercetta quando il frontend invia una richiesta HTTP, tipicamente in seguito al click dell’utente. Il parametro dinamico <station_id> viene estratto dalla URL e passato alla funzione <get_station_detail>, che restituisce i dati richiesti. Il frontend riceve la risposta e mostra il dettaglio della stazione corrispondente.
 #? FLUSSO COMPLETO:
-# - L’utente clicca su una stazione nel frontend
-# - Il frontend invia una richiesta HTTP a /stations/A123
+# - L’utente clicca su una stazione nel frontend Axios(è una libreria di JS e TS che fa da ponte che invia la richiesta dal frontend Nuxt al backend Flask) (es. A123)
+# - Il frontend usa Axios per inviare una richiesta HTTP a /stations/A123
 # - Flask intercetta la rotta /stations/<station_id>
-# - Chiama get_station_detail("A123")
-# - La funzione costruisce l’URL upstream, ottiene i dati, li elabora
-# - Restituisce un JSON al frontend
-# - Il frontend mostra il dettaglio della stazione
+# - Flask Chiama la funzione get_station_detail("A123")
+# - La funzione costruisce l’URL upstream(verso un altro servizio o database), ottiene i dati, li elabora
+# - Flask Restituisce un JSON al frontend
+# - Il frontend riceve la risposta da Axios e mostra il dettaglio della stazione nella pagina
 
 
 
