@@ -1,4 +1,4 @@
-/* Questo file è stato creato per centralizzare la configurazione delle chiamate API per mantenere codice pulito e riutilizzabile  */
+/* Questo file è stato creato per centralizzare la configurazione delle chiamate API per mantenere codice pulito e riutilizzabile evitando di scrivere fetch o axios in ogni componente   */
 
 //Import di axios per effettuare le chiamate HTTP verso il backend.
 import axios from "axios";

@@ -1,15 +1,36 @@
 <script setup lang="ts">
 // Import dai composables di Vue Router e reattività
-import { ref, onMounted, computed } from "vue";
-import { useRoute } from "vue-router";
-import { useRouter } from "vue-router";
+import { ref, onMounted, computed } from "vue"; /* 
+- ref -> Crea una variabile reattiva
+- onMounted -> hook di ciclo di vita(esegue una funzione quando il componente e montato nel DOM)
+- computed -> Crea una variabile derivata da altre variabili reattive(si aggiorna automaticamente quando le dipendenze cambinao) */
+
+import { useRoute } from "vue-router"; /*useRoute è un composable(useApi.ts) di Vue Router che permette di :
+- leggere la route attuale(cioè la pagina in cui ti trovi)
+- Accedere ai parmetri della URL, come l'id della stazione
+- Vedere query string, nome route*/
+
+import { useRouter } from "vue-router"; /* useRouter è un altro composeble(useApi.ts) che da accesso al router(il sistema di navigazione) e permette di :
+- Navigare tra le pagine (router.push(..))
+- Tornare indietro (router.back())
+- Controllare la cronologia, route attiva */
 
 /*
   1) Prendi l'id dalla route
   - useRoute() fornisce i params; lo castiamo a stringa per sicurezza.
 */
-const route = useRoute();
-const router = useRouter();
+const route =
+  useRoute(); /* Crea una variabile route che permette di leggere la route attutale e con route si accede a:
+ - route.params -> parametri dinamici della URL(es. /stations/:id)
+ - route.query -> query string(es. ?lang=it)
+ - route.name, route.path, ecc*/
+
+const router =
+  useRouter(); /* Crea una variabile router che permette di navigare tra le pagine e permette di:
+- Fare router.push("/home")per andare a una pagina
+- Fare router.back() per tronare indietro
+- Accedere alla cronologia, route attiva, ecc.. */
+
 const id = String(route.params.id || "");
 
 /*
